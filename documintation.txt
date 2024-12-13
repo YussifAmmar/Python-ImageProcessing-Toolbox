@@ -1,0 +1,136 @@
+### **Document Explanation of the Code**
+
+#### **1. Introduction**
+
+This Python program is designed to load and display grayscale TIFF images manually (without using high-level image libraries like OpenCV or Pillow). The code manually reads and parses the TIFF file, extracts pixel data, and then displays the image using basic Python libraries.
+
+#### **2. Overview of the Code**
+
+The code does the following:
+- Reads a **TIFF** file, specifically in grayscale.
+- Parses the file header and image metadata.
+- Extracts image pixel data (for grayscale images).
+- Displays the image manually using **tkinter** for GUI-based display.
+
+---
+
+#### **3. Key Components of the Code**
+
+##### **3.1 TIFF Header and Magic Number**
+
+```python
+def read_tiff(self, file_path):
+    with open(file_path, 'rb') as file:
+        # Read magic number (first 2 bytes) to check if it's a valid TIFF file
+        magic_number = int.from_bytes(file.read(2), byteorder='little')
+        print(f"Magic number: {hex(magic_number)}")
+```
+
+- The **magic number** is a 2-byte signature at the beginning of the TIFF file that indicates the file type. In this case, we read the first two bytes to verify that the file is indeed a valid TIFF file.
+- `magic_number` should be `0x4949` (for little-endian) or `0x4D4D` (for big-endian), so the code checks for that.
+
+##### **3.2 Parsing TIFF Image Data**
+
+After verifying the TIFF magic number, the code moves on to read the image data:
+
+```python
+def read_tiff(self, file_path):
+    with open(file_path, 'rb') as file:
+        # Read and verify the header
+        file.seek(4)  # Skip first 4 bytes (offset to next relevant data)
+        offset = int.from_bytes(file.read(4), byteorder='little')
+        print(f"Offset to IFD: {offset}")
+
+        # Read IFD and retrieve image data (in this case, grayscale image)
+        file.seek(offset)
+        num_entries = int.from_bytes(file.read(2), byteorder='little')
+        print(f"Number of IFD entries: {num_entries}")
+```
+
+- The code moves past the header to reach the **Image File Directory (IFD)**, which contains information about the image (e.g., width, height, pixel data).
+- The **offset** in the header tells us where the IFD starts. The IFD contains entries about the image's properties, such as the dimensions, number of channels, and more.
+
+##### **3.3 Reading Pixel Data**
+
+Once the TIFF metadata is read and validated, the pixel data is extracted:
+
+```python
+def read_pixel_data(self, file, offset):
+    # Move the file pointer to the pixel data
+    file.seek(offset)
+    pixel_data = []
+    for row in range(self.height):
+        row_data = []
+        for col in range(self.width):
+            pixel = int.from_bytes(file.read(1), byteorder='little')  # Read one byte per pixel (grayscale)
+            row_data.append(pixel)
+        pixel_data.append(row_data)
+    return pixel_data
+```
+
+- **Pixel Data**: The pixel data is read byte-by-byte (grayscale images have one byte per pixel).
+- The **width** and **height** of the image are already read from the IFD, and then the pixel data is loaded row-by-row and column-by-column.
+
+##### **3.4 Displaying the Image Using tkinter**
+
+The pixel data is stored in a 2D list (`pixel_data`), which is then used to generate an image for display. `tkinter` is used to create a window and show the image:
+
+```python
+def show_image(self):
+    root = tk.Tk()
+    root.title("TIFF Image")
+    
+    canvas = tk.Canvas(root, width=self.width, height=self.height)
+    canvas.pack()
+
+    for row in range(self.height):
+        for col in range(self.width):
+            pixel_value = self.pixel_data[row][col]
+            canvas.create_rectangle(col, row, col + 1, row + 1, fill=self.get_color(pixel_value), width=0)
+
+    root.mainloop()
+
+def get_color(self, pixel_value):
+    return f'#{pixel_value:02x}{pixel_value:02x}{pixel_value:02x}'  # Grayscale (R=G=B)
+```
+
+- The pixel data is used to create a **rectangle** for each pixel on a **tkinter canvas**.
+- The function `get_color` converts each pixel value into a **grayscale** color format (`#RRGGBB`), where all RGB channels are set to the same value (since it's grayscale).
+- The `tkinter` canvas is updated with rectangles representing each pixel's intensity.
+
+---
+
+#### **4. Additional Concepts to Understand**
+
+To fully understand how the code works, it’s important to learn the following concepts:
+
+1. **TIFF File Format**: Learn how the TIFF file format works, how the header is structured, and how to extract pixel data.
+   - **Resources**:
+     - [TIFF File Format Specification](https://www.adobe.com/content/dam/acom/en/devnet/tiff/pdfs/5173.TIFF6.pdf)
+     - [TIFF Image Tutorial](https://www.tutorialspoint.com/how-do-i-read-tiff-images-in-python)
+
+2. **Python File Handling (Binary Files)**: Understanding how to work with binary data is essential when reading files like TIFF.
+   - **Resources**:
+     - [Python File I/O](https://realpython.com/read-write-files-python/)
+     - [Reading and Writing Binary Data in Python](https://python-course.eu/python-tutorial/binary-files.php)
+
+3. **TIFF Image Directory (IFD)**: The IFD contains metadata and pointers to the actual image data. Understanding how to parse the IFD is critical.
+   - **Resources**:
+     - [TIFF Header Structure](https://www.exiv2.org/tiff.html)
+     - [TIFF IFD Entry Types](https://www.awaresystems.be/imaging/tiff/tifftags.html)
+
+4. **Tkinter Basics**: Learn how to use tkinter to display images and create simple GUI applications.
+   - **Resources**:
+     - [Tkinter Documentation](https://docs.python.org/3/library/tkinter.html)
+     - [Tkinter Tutorial for Beginners](https://realpython.com/python-gui-tkinter/)
+
+5. **Image Representation in Memory**: Understanding how images are stored in memory (as arrays of pixel values) helps you manipulate and display them effectively.
+   - **Resources**:
+     - [Image Representation](https://www.cs.rit.edu/~ats/computer-graphics/images.html)
+     - [NumPy for Image Processing](https://realpython.com/numpy-array-programming/)
+
+---
+
+#### **5. Conclusion**
+
+This program helps you understand how to work with raw image data from a TIFF file, process it manually, and display it using Python. By focusing on the **TIFF format**, **binary data handling**, and **manual image display**, you’ve learned how to build an image reader from scratch. To improve your skills, exploring the concepts mentioned above will give you a deeper understanding of how images are represented and processed.
