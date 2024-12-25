@@ -1,38 +1,49 @@
 import struct
-import tkinter as tk
-from tkinter import Canvas
-from tkinter import messagebox
-from tkinter import filedialog
+import customtkinter as ctk
+from tkinter import filedialog, messagebox
 from PIL import Image, ImageTk ,ImageDraw, ImageFont  # We're using PIL for handling image display
 import math
 class CustomGUI:
     def __init__(self, master, image_processor):
         self.master = master
+        self.master.geometry("400x500")
         self.image_processor = image_processor
         self.master.title("Custom Image Processing GUI")
-
+        
+        # Set up customtkinter theme
+        ctk.set_appearance_mode("System")  # You can set to "Dark" or "Light"
+        ctk.set_default_color_theme("blue")  # You can choose other themes
+        
         # Main Frame
-        self.frame = tk.Frame(self.master, bg="lightgray", padx=10, pady=10)
-        self.frame.pack(fill=tk.BOTH, expand=True)
-
+        self.frame = ctk.CTkFrame(self.master,width=400,height=500)
+        self.frame.pack(fill=ctk.BOTH, expand=True)
+        
         # Title Label
-        title_label = tk.Label(self.frame, text="Home-Made MATLAB Image Processor",
-                               font=("Arial", 16), bg="lightgray", fg="black")
+        title_label = ctk.CTkLabel(self.frame, text="Home-Made MATLAB Image Processor", font=("Arial", 16))
         title_label.pack(pady=10)
-
+        
         # Function Buttons
-        tk.Button(self.frame, text="Lighten Image", command=self.lighten).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Darken Image", command=self.darken).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Negative Image", command=self.negative).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Power-Law Transformation", command=self.powerlaw).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Histogram Stretch", command=self.histogram_stretch).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Histogram Equalization", command=self.histogram_equalization).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Blur Image", command=self.blur).pack(fill=tk.X, padx=5, pady=5)
-        tk.Button(self.frame, text="Save and Display Image", command=self.save_and_display).pack(fill=tk.X, padx=5, pady=5)
+        self.create_button("Lighten Image", self.lighten)
+        self.create_button("Darken Image", self.darken)
+        self.create_button("Negative Image", self.negative)
+        self.create_button("Power-Law Transformation", self.powerlaw)
+        self.create_button("Histogram Stretch", self.histogram_stretch)
+        self.create_button("Histogram Equalization", self.histogram_equalization)
+        self.create_button("Blur Image", self.blur)
+        self.create_button("Show Original",self.display_original)
+        self.create_button("Save and Display Image", self.save_and_display)
 
         # Exit Button
-        tk.Button(self.frame, text="Exit", command=self.master.quit, bg="red", fg="white").pack(fill=tk.X, padx=5, pady=20)
+        exit_button = ctk.CTkButton(self.frame, text="Exit", command=self.master.quit, fg_color="red", hover_color="darkred")
+        exit_button.pack(fill=ctk.X, padx=5, pady=20)
 
+    def display_original(self):
+        self.image_processor.display_original()
+
+    def create_button(self, text, command):
+        button = ctk.CTkButton(self.frame, text=text, command=command)
+        button.pack(fill=ctk.X, padx=5, pady=5)
+    
     def lighten(self):
         self.open_input_window("Lighten Image", ["Value", "Start Range", "End Range"],
                                lambda vals: self.image_processor.lighten(int(vals[0]), int(vals[1]), int(vals[2])))
@@ -62,48 +73,15 @@ class CustomGUI:
         messagebox.showinfo("Action Complete", "Negative transformation applied.")
 
     def save_and_display(self):
-
-        #***Currently only displaying the result, dehash the code below for saving***#
-        self.image_processor.display(image_type='Processed_IMG')
-
-
-        # # Create a new window asking the user for the filename
-        # input_window = tk.Toplevel(self.master)
-        # input_window.title("Enter Filename")
-        # input_window.geometry("300x150")
-        # input_window.grab_set()  # Make this window modal (blocks interaction with the main window)
-
-        # # Create label and entry field for the filename input
-        # tk.Label(input_window, text="Enter the filename (without extension):").pack(pady=10)
-        # filename_entry = tk.Entry(input_window)
-        # filename_entry.pack(pady=10)
-
-        # def save_action():
-        #     # Get the filename entered by the user
-        #     filename = filename_entry.get()
-
-        #     # Check if the filename is not empty
-        #     if filename:
-        #         # Save the image with the entered filename
-        #         self.image_processor.display(image_type=filename)  # This will save and display the image
-        #         messagebox.showinfo("Action Complete", f"Image saved as {filename}_output_image.png")
-        #         input_window.destroy()  # Close the window after saving
-        #     else:
-        #         # Show an error message if the filename is empty
-        #         messagebox.showerror("Error", "Please enter a valid filename.")
-
-        # # "Save" button to apply the action
-        # tk.Button(input_window, text="Save", command=save_action).pack(pady=10)
-
-        # # "Cancel" button to close the input window without saving
-        # tk.Button(input_window, text="Cancel", command=input_window.destroy).pack(pady=10)
+        self.open_input_window("Save and Display", ["Name of the output img"],
+                               lambda vals: self.image_processor.display(str(vals[0])))
 
 
     def open_input_window(self, title, labels, process_function):
-        # Create a new top-level window
-        input_window = tk.Toplevel(self.master)
+        # Create a new top-level window using customtkinter
+        input_window = ctk.CTkToplevel(self.master)
         input_window.title(title)
-        input_window.geometry("300x300")
+        input_window.geometry("200x400")
         input_window.grab_set()
 
         # Store input fields
@@ -111,8 +89,8 @@ class CustomGUI:
 
         # Create labels and entry fields for each required input
         for label in labels:
-            tk.Label(input_window, text=label).pack(pady=5)
-            entry = tk.Entry(input_window)
+            ctk.CTkLabel(input_window, text=label).pack(pady=5)
+            entry = ctk.CTkEntry(input_window)
             entry.pack(pady=5)
             input_fields.append(entry)
 
@@ -128,10 +106,12 @@ class CustomGUI:
                 messagebox.showerror("Error", f"Failed to apply {title}: {e}")
 
         # Apply Button
-        tk.Button(input_window, text="Apply", command=apply_action).pack(pady=10)
+        apply_button = ctk.CTkButton(input_window, text="Apply", command=apply_action)
+        apply_button.pack(pady=10)
 
         # Cancel Button
-        tk.Button(input_window, text="Cancel", command=input_window.destroy).pack(pady=10)
+        cancel_button = ctk.CTkButton(input_window, text="Cancel", command=input_window.destroy)
+        cancel_button.pack(pady=10)
 
 
 
@@ -330,28 +310,28 @@ class Home_Made_Matlab:
 
 
 
-    def display_image(self):
-        root = tk.Tk()
-        root.title("Image Display")
+    # def display_image(self):
+    #     root = tk.Tk()
+    #     root.title("Image Display")
 
-        # Create a canvas to display the image
-        canvas = Canvas(root, width=self.width, height=self.height)
-        canvas.pack()
+    #     # Create a canvas to display the image
+    #     canvas = Canvas(root, width=self.width, height=self.height)
+    #     canvas.pack()
 
-        # Convert the image data into a format that can be displayed
-        img_data = []
-        for row in self.image_data:
-            for pixel in row:
-                img_data.append((pixel, pixel, pixel))  
+    #     # Convert the image data into a format that can be displayed
+    #     img_data = []
+    #     for row in self.image_data:
+    #         for pixel in row:
+    #             img_data.append((pixel, pixel, pixel))  
                 
-        # Convert the list of pixel data into a PIL Image
-        img = Image.new('RGB', (self.width, self.height))
-        img.putdata(img_data)
+    #     # Convert the list of pixel data into a PIL Image
+    #     img = Image.new('RGB', (self.width, self.height))
+    #     img.putdata(img_data)
 
         
-        tk_img = ImageTk.PhotoImage(img)
-        canvas.create_image(0, 0, anchor=tk.NW, image=tk_img)
-        root.mainloop()
+    #     tk_img = ImageTk.PhotoImage(img)
+    #     canvas.create_image(0, 0, anchor=tk.NW, image=tk_img)
+    #     root.mainloop()
 
     def display(self, image_type="Original"):
         # Convert the image data into a flat list (from 2D to 1D)
@@ -362,28 +342,39 @@ class Home_Made_Matlab:
         img.putdata(img_data)  # Add pixel data to the image
 
         # Save the image with a custom name (ensure the file extension is valid)
-        filename = f"{image_type}_output_image.png"  # Custom filename with .png extension
+        filename = f"{image_type}.png"  # Custom filename with .png extension
         img.save(filename)  # Save the image with the given name
 
         # Open the saved image (This will display it with the custom filename in the viewer)
         img.show()
 
+    def display_original(self):
+        img = Image.open(self.file_path)
+        img.show()
 
 if __name__ == "__main__":
-    
+    # File dialog to select the TIFF image
     file_path = filedialog.askopenfilename(title="Select a TIFF Image", filetypes=[("TIFF files", "*.tif")])
     if not file_path:
-        messagebox.showerror("Error !","No file selected. Exiting.")
+        messagebox.showerror("Error!", "No file selected. Exiting.")
 
-
-
+        
     else:
-        #image = Home_Made_Matlab(r'C:\Users\Yussif\OneDrive\Desktop\level_3\DIP\project\samples\Ein1.tif')
+        # Create an instance of Home_Made_Matlab with the selected file path
         image = Home_Made_Matlab(file_path)
         image.origin_data = [row[:] for row in image.image_data]
 
-        root = tk.Tk()
-        gui = CustomGUI(root, image)
-        root.mainloop()
+        # Initialize the main window using customtkinter
+        root = ctk.CTk()  # Use CTk instead of Tk to integrate customtkinter
+        root.title("Custom Image Processing GUI")
+        
+        # Set the appearance mode and theme
+        ctk.set_appearance_mode("System")  # You can change to "Light" or "Dark"
+        ctk.set_default_color_theme("blue")  # You can set a different theme
 
+        # Create the GUI with the custom window and pass the image
+        gui = CustomGUI(root, image)
+        
+        # Start the main loop
+        root.mainloop()
 
